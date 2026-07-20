@@ -497,7 +497,7 @@
         const left = cx - width * .5;
         const right = cx + width * .5;
         const seamY = top + height * .06;
-        const valleyY = top + height * .92;
+        const valleyY = top + height * 1.18;
 
         context.save();
         context.translate(cx, top);
@@ -622,7 +622,7 @@
           context.restore();
         }
 
-        drawCreamFlap(cx, top, bodyWidth, bodyHeight * .18, creamOpen);
+        drawCreamFlap(cx, top, bodyWidth, bodyHeight * .27, creamOpen);
         context.restore();
 
         const caption = progress < .5 ? "我是什么？" : "我是红包！";
@@ -1410,17 +1410,17 @@
         context.textAlign = "center";
         context.textBaseline = "top";
         context.lineJoin = "round";
-        context.translate(trackX + 20, trackY + trackHeight + 50);
-        context.font = "900 54px 'TongZhen', sans-serif";
+        context.translate(trackX + 140, trackY + trackHeight + 50);
+        context.font = "900 62px 'TongZhen', sans-serif";
         context.strokeStyle = "rgba(255,255,255,.98)";
-        context.lineWidth = 12;
+        context.lineWidth = 13;
         context.strokeText("举起手", 0, 0);
         context.fillStyle = "#111315";
         context.fillText("举起手", 0, 0);
-        context.font = "900 46px 'TongZhen', sans-serif";
-        context.strokeText("向上推，变变变！", 0, 64);
+        context.font = "900 56px 'TongZhen', sans-serif";
+        context.strokeText("向上推，变变变！", 0, 76);
         context.fillStyle = "#f08a2f";
-        context.fillText("向上推，变变变！", 0, 64);
+        context.fillText("向上推，变变变！", 0, 76);
         context.restore();
 
         if (currentPage === 2) {

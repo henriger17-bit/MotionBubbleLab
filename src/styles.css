@@ -2105,4 +2105,17 @@ h1 em {
   .intro-copy br { display: none; }
   .actions { align-items: flex-start; flex-direction: column; gap: 7px; }
   .camera-card { top: 128px; right: 14px; bottom: auto; width: 176px; }
-  .camera-head { font-size: 6p
+  .camera-head { font-size: 6px; }
+  .tracking-body { padding: 8px; }
+  .camera-foot { display: none; }
+  .footer { bottom: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -34,7 +34,7 @@
             <span class="title-book">体感绘本</span>
           </h1>
           <small class="lobby-distance-hint">请离屏幕远一些，让摄像头看到完整身体</small>
-          <p>宝宝站到镜头前，让身体成为控制器，操作奇妙世界。</p>
+          <p>引导宝宝站到镜头前，让身体成为控制器，操作奇妙世界</p>
           <button class="magic-start" id="welcome-start" type="button" aria-label="开启摄像头，进入奇妙世界">
             <span class="magic-symbols" aria-hidden="true">
               <i>✿</i><i>★</i><i>❧</i><i>✎</i>
@@ -43,6 +43,16 @@
           <small id="welcome-status" role="status" aria-live="polite">点击闪亮按钮开启摄像头</small>
         </div>
       </section>
+
+      <div class="permission-modal" id="permission-modal" role="dialog" aria-modal="true" aria-labelledby="permission-title" hidden>
+        <div class="permission-card">
+          <h3 id="permission-title">开启摄像头</h3>
+          <p>请允许浏览器使用摄像头，让我们用身体来操作奇妙世界。</p>
+          <button class="permission-allow" id="permission-allow" type="button">允许开启摄像头</button>
+          <p class="permission-status" id="permission-status" role="alert"></p>
+          <button class="permission-cancel" id="permission-cancel" type="button">暂不开启</button>
+        </div>
+      </div>
 
       <section class="home-screen" id="home-screen" aria-labelledby="home-title">
         <div class="lobby-heading">

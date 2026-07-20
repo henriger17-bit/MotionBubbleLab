@@ -97,6 +97,10 @@ const dom = {
   videoStage: document.querySelector("#video-stage"),
   welcomeStart: document.querySelector("#welcome-start"),
   welcomeStatus: document.querySelector("#welcome-status"),
+  permissionModal: document.querySelector("#permission-modal"),
+  permissionAllow: document.querySelector("#permission-allow"),
+  permissionStatus: document.querySelector("#permission-status"),
+  permissionCancel: document.querySelector("#permission-cancel"),
   homeButton: document.querySelector("#home-button"),
   backButton: document.querySelector("#back-button"),
   gameTiles: document.querySelectorAll("[data-game]"),
@@ -1155,17 +1159,43 @@ dom.gameFrame.addEventListener("load", async () => {
   }
 });
 
-dom.welcomeStart.addEventListener("click", async () => {
+function openPermissionModal() {
+  dom.permissionStatus.textContent = "";
+  dom.permissionAllow.disabled = false;
+  dom.permissionAllow.textContent = "允许开启摄像头";
+  dom.permissionModal.hidden = false;
+}
+
+function closePermissionModal() {
+  dom.permissionModal.hidden = true;
+}
+
+dom.welcomeStart.addEventListener("click", () => {
   dom.welcomeStart.disabled = true;
-  dom.welcomeStatus.textContent = "正在进入奇妙世界…";
-  dom.app.classList.add("session-ready", "lobby-active");
+  openPermissionModal();
+});
+
+dom.permissionAllow.addEventListener("click", async () => {
+  dom.permissionAllow.disabled = true;
+  dom.permissionAllow.textContent = "正在开启…";
+  dom.permissionStatus.textContent = "正在请求摄像头权限…";
   try {
     await tracker.start();
+    closePermissionModal();
     dom.welcomeStatus.textContent = "摄像头已开启";
+    dom.app.classList.add("session-ready", "lobby-active");
   } catch (error) {
-    console.warn("Camera not available, entering without body tracking:", error);
-    dom.welcomeStatus.textContent = "未开启摄像头，可浏览但无法体感";
+    console.error("Camera initialization failed:", error);
+    dom.permissionAllow.disabled = false;
+    dom.permissionAllow.textContent = "重新尝试";
+    dom.permissionStatus.textContent = (error instanceof Error ? error.message : "无法访问摄像头") + "，请检查浏览器权限后重试";
   }
+});
+
+dom.permissionCancel.addEventListener("click", () => {
+  closePermissionModal();
+  dom.welcomeStart.disabled = false;
+  dom.welcomeStatus.textContent = "需要开启摄像头才能开始";
 });
 
 dom.gameTiles.forEach((tile) => {

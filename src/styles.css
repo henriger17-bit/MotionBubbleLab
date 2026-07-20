@@ -1066,7 +1066,7 @@ h1 em {
 
 .lobby-distance-hint {
   display: block;
-  margin-top: 17px;
+  margin-top: 40px;
   color: #39343a;
   font-size: clamp(25px, 2.5vw, 36px);
   font-weight: 900;
@@ -1652,22 +1652,32 @@ h1 em {
   background: linear-gradient(150deg, #ffd064, #f18a69);
 }
 
-.kid-hand {
+.kid-hand-img {
   position: absolute;
-  bottom: 10%;
-  font-size: 96px;
-  font-style: normal;
-  line-height: 1;
+  bottom: 0;
+  height: 95%;
+  width: auto;
   filter: drop-shadow(0 8px 10px rgba(111, 55, 40, 0.22));
+}
+
+.hand-left-img {
+  left: 6%;
   animation: hand-bob 2.6s ease-in-out infinite;
 }
 
-.hand-left { left: 15%; }
-.hand-right { right: 15%; animation-delay: -1.3s; }
+.hand-right-img {
+  right: 6%;
+  animation: hand-bob-right 2.6s ease-in-out infinite;
+}
 
 @keyframes hand-bob {
   0%, 100% { transform: translateY(0) rotate(-5deg); }
   50% { transform: translateY(-10px) rotate(3deg); }
+}
+
+@keyframes hand-bob-right {
+  0%, 100% { transform: translateY(0) rotate(-5deg) scaleX(-1); }
+  50% { transform: translateY(-10px) rotate(3deg) scaleX(-1); }
 }
 
 .motion-spark {

@@ -1,0 +1,1620 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fff8e9" />
+    <title>向上变变变</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='32' rx='23' ry='28' fill='%23afc5d2'/%3E%3C/svg%3E" />
+    <style>
+      @font-face {
+        font-family: "TongZhen";
+        src: url("/fonts/zaozigongfang-tongzhen.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+      }
+
+      :root {
+        font-family: "TongZhen", sans-serif;
+        color: #412b20;
+        background: #fff8e9;
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        font-family: "TongZhen", sans-serif !important;
+      }
+
+      html, body, main {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: #fff8e9;
+      }
+
+      html.shared-camera,
+      body.shared-camera,
+      body.shared-camera #book-game {
+        background: transparent !important;
+      }
+
+      body.shared-camera .start-screen {
+        display: none;
+      }
+
+      body.shared-camera #camera {
+        display: block;
+        opacity: 1;
+      }
+
+      #camera,
+      #scene-canvas,
+      .wash {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #camera {
+        z-index: 0;
+        object-fit: cover;
+        opacity: 0;
+        transform: scaleX(-1);
+        transition: opacity .35s ease;
+      }
+
+      .is-playing #camera { opacity: 1; }
+
+      .wash {
+        display: none;
+      }
+
+      #scene-canvas {
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .page-turn,
+      .page-back {
+        position: absolute;
+        z-index: 6;
+        top: 22px;
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 2px solid rgba(255, 255, 255, .94);
+        border-radius: 50%;
+        color: #fff;
+        background: #090a0c;
+        box-shadow: 0 0 9px rgba(255, 255, 255, .88), 0 0 22px rgba(255, 255, 255, .46);
+        font-family: "TongZhen", sans-serif;
+        cursor: pointer;
+        transition: transform .24s cubic-bezier(.2, .85, .3, 1.35), box-shadow .24s ease, opacity .2s ease;
+      }
+
+      .page-turn { right: 24px; }
+
+      .page-back {
+        right: 98px;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(.72);
+      }
+
+      .page-back.page-visible {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+      }
+
+      .page-turn.page-hidden {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(.72);
+      }
+
+      .page-turn::before,
+      .page-back::before {
+        content: "";
+        position: absolute;
+        inset: -10px;
+        border: 3px solid rgba(255, 255, 255, .9);
+        border-radius: 50%;
+        opacity: 0;
+        transform: scale(.72);
+        transition: opacity .2s ease, transform .55s linear;
+      }
+
+      .page-turn.touch-active,
+      .page-back.touch-active {
+        transform: scale(1.35);
+        box-shadow: 0 0 16px #fff, 0 0 38px rgba(255, 255, 255, .82);
+      }
+
+      .page-turn.touch-active::before,
+      .page-back.touch-active::before {
+        opacity: 1;
+        transform: scale(1.12);
+      }
+
+      .page-turn i,
+      .page-back i {
+        margin-top: -5px;
+        font-size: 44px;
+        font-style: normal;
+        line-height: 1;
+      }
+
+      .page-turn i { margin-left: 3px; }
+      .page-back i { margin-right: 3px; }
+
+      .start-screen {
+        position: absolute;
+        z-index: 10;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        padding: 30px;
+        text-align: center;
+        background:
+          radial-gradient(circle at 67% 45%, rgba(255,198,78,.24), transparent 28%),
+          linear-gradient(135deg, #fffaf0, #f8e4bc);
+        transition: opacity .45s ease, visibility .45s;
+      }
+
+      .start-screen.hidden {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .egg-icon {
+        position: relative;
+        width: 104px;
+        height: 134px;
+        margin-bottom: 25px;
+        border: 0;
+        border-radius: 50% 50% 47% 47% / 58% 58% 42% 42%;
+        background: #afc5d2;
+        box-shadow: none;
+      }
+
+      .egg-icon::before,
+      .egg-icon::after {
+        content: "";
+        position: absolute;
+        top: 51px;
+        width: 10px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .egg-icon::before { left: 28px; }
+      .egg-icon::after { right: 28px; }
+
+      .start-screen small {
+        color: #d37b25;
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: .08em;
+      }
+
+      .start-screen h2 {
+        margin: 11px 0 13px;
+        font-size: clamp(40px, 5.5vw, 64px);
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .start-screen p {
+        max-width: 480px;
+        margin: 0 0 27px;
+        color: rgba(65,43,32,.68);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.65;
+      }
+
+      #start-button {
+        min-width: 190px;
+        padding: 14px 24px;
+        border: 0;
+        border-radius: 999px;
+        color: #fff;
+        background: linear-gradient(110deg, #f5a339, #ec7928);
+        box-shadow: 0 12px 30px rgba(222,119,35,.24);
+        font: inherit;
+        font-size: 18px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform .18s ease;
+      }
+      #start-button:hover { transform: translateY(-2px); }
+      #start-button:disabled { cursor: wait; opacity: .65; }
+
+      .error {
+        min-height: 20px;
+        margin-top: 14px;
+        color: #bd3d37;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      @media (max-width: 720px) {
+        .top { top: 18px; left: 18px; right: 18px; }
+        .instruction { top: 13%; left: 22px; right: 22px; }
+        .instruction h1 { font-size: clamp(38px, 13vw, 60px); }
+        .instruction > span { font-size: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="book-game">
+      <video id="camera" autoplay muted playsinline></video>
+      <div class="wash" aria-hidden="true"></div>
+      <canvas id="scene-canvas" aria-label="互动绘本动画画面"></canvas>
+
+      <button class="page-back" id="page-back" type="button" aria-label="翻到上一页"><i>‹</i></button>
+      <button class="page-turn" id="page-turn" type="button" aria-label="翻到下一页"><i>›</i></button>
+
+      <section class="start-screen" id="start-screen">
+        <div class="egg-icon" aria-hidden="true"></div>
+        <small>MOTION MAGIC GAME</small>
+        <h2>向上变变变</h2>
+        <p>举起右手推动摇杆，让画面中的形状一步步变成意想不到的新事物。</p>
+        <button id="start-button" type="button">开启摄像头并开始</button>
+        <div class="error" id="error" role="alert"></div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script>
+      const root = document.querySelector("#book-game");
+      const video = document.querySelector("#camera");
+      const canvas = document.querySelector("#scene-canvas");
+      const context = canvas.getContext("2d");
+      const startScreen = document.querySelector("#start-screen");
+      const startButton = document.querySelector("#start-button");
+      const sharedCameraMode = new URLSearchParams(window.location.search).get("shared") === "1";
+      const pageBack = document.querySelector("#page-back");
+      const pageTurn = document.querySelector("#page-turn");
+      const error = document.querySelector("#error");
+
+      let pose = null;
+      let camera = null;
+      let targetProgress = 0;
+      let leverProgress = 0;
+      let progress = 0;
+      let running = false;
+      let currentPage = 1;
+      let pageTouchStartedAt = null;
+      let backTouchStartedAt = null;
+      let pageSwitching = false;
+      let lastFrame = performance.now();
+
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const lerp = (start, end, factor) => start + (end - start) * factor;
+
+      function resizeCanvas() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(window.innerWidth * ratio);
+        canvas.height = Math.round(window.innerHeight * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function roundedRect(x, y, width, height, radius) {
+        context.beginPath();
+        context.roundRect(x, y, width, height, radius);
+      }
+
+      function drawChick(cx, cy, radius, reveal) {
+        context.save();
+        context.globalAlpha = clamp(reveal * 1.7, 0, 1);
+        context.translate(0, (1 - reveal) * radius * .22);
+
+        context.fillStyle = "#f8cf3c";
+        context.beginPath();
+        context.ellipse(cx, cy + radius * .16, radius * .58, radius * .7, 0, 0, Math.PI * 2);
+        context.fill();
+
+        context.save();
+        context.shadowColor = "rgba(91, 65, 14, .48)";
+        context.shadowBlur = radius * .09;
+        context.shadowOffsetY = radius * .05;
+        context.fillStyle = "#f0b51c";
+        context.beginPath();
+        context.ellipse(cx - radius * .48, cy + radius * .22, radius * .2, radius * .3, .4, 0, Math.PI * 2);
+        context.ellipse(cx + radius * .48, cy + radius * .22, radius * .2, radius * .3, -.4, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+
+        context.fillStyle = "#25201b";
+        context.beginPath();
+        context.arc(cx - radius * .18, cy - radius * .06, radius * .052, 0, Math.PI * 2);
+        context.arc(cx + radius * .18, cy - radius * .06, radius * .052, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = "#e87927";
+        context.beginPath();
+        context.moveTo(cx - radius * .11, cy + radius * .05);
+        context.lineTo(cx + radius * .11, cy + radius * .05);
+        context.lineTo(cx, cy + radius * .18);
+        context.closePath();
+        context.fill();
+        context.restore();
+      }
+
+      function traceSeam(cx, cy, rx, ry) {
+        context.beginPath();
+        context.moveTo(cx - rx, cy);
+        context.lineTo(cx - rx * .64, cy + ry * .07);
+        context.lineTo(cx - rx * .26, cy - ry * .045);
+        context.lineTo(cx + rx * .12, cy + ry * .075);
+        context.lineTo(cx + rx * .55, cy - ry * .035);
+        context.lineTo(cx + rx, cy);
+      }
+
+      function traceTopShell(cx, cy, rx, ry) {
+        context.beginPath();
+        context.moveTo(cx - rx, cy);
+        context.bezierCurveTo(cx - rx, cy - ry * .64, cx - rx * .56, cy - ry, cx, cy - ry);
+        context.bezierCurveTo(cx + rx * .56, cy - ry, cx + rx, cy - ry * .64, cx + rx, cy);
+        context.lineTo(cx + rx * .55, cy - ry * .035);
+        context.lineTo(cx + rx * .12, cy + ry * .075);
+        context.lineTo(cx - rx * .26, cy - ry * .045);
+        context.lineTo(cx - rx * .64, cy + ry * .07);
+        context.closePath();
+      }
+
+      function traceBottomShell(cx, cy, rx, ry) {
+        context.beginPath();
+        context.moveTo(cx - rx, cy);
+        context.bezierCurveTo(cx - rx, cy + ry * .64, cx - rx * .56, cy + ry, cx, cy + ry);
+        context.bezierCurveTo(cx + rx * .56, cy + ry, cx + rx, cy + ry * .64, cx + rx, cy);
+        context.lineTo(cx + rx * .55, cy - ry * .035);
+        context.lineTo(cx + rx * .12, cy + ry * .075);
+        context.lineTo(cx - rx * .26, cy - ry * .045);
+        context.lineTo(cx - rx * .64, cy + ry * .07);
+        context.closePath();
+      }
+
+      function drawFace(cx, cy, rx, opacity = 1) {
+        context.save();
+        context.globalAlpha = opacity;
+        context.fillStyle = "#20262a";
+        context.beginPath();
+        context.arc(cx - rx * .1, cy - rx * .055, rx * .038, 0, Math.PI * 2);
+        context.arc(cx + rx * .1, cy - rx * .055, rx * .038, 0, Math.PI * 2);
+        context.fill();
+
+        context.strokeStyle = "#20262a";
+        context.lineWidth = Math.max(2, rx * .014);
+        context.lineCap = "round";
+        context.beginPath();
+        context.arc(cx, cy + rx * .015, rx * .06, .18, Math.PI - .18);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawCaption(text, x, y, scale) {
+        context.save();
+        context.translate(x, y);
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.lineJoin = "round";
+        context.rotate(-.075);
+        context.font = `900 ${Math.round(58 * scale)}px 'TongZhen', sans-serif`;
+        context.strokeStyle = "rgba(255,255,255,.98)";
+        context.lineWidth = Math.max(7, 7 * scale);
+        context.strokeText(text, 0, 0);
+        context.fillStyle = "#17191b";
+        context.fillText(text, 0, 0);
+        context.restore();
+      }
+
+      function drawTail(cx, cy, rx, ry) {
+        context.strokeStyle = "#315d7a";
+        context.lineWidth = Math.max(3, rx * .016);
+        context.lineCap = "round";
+        context.beginPath();
+        context.moveTo(cx, cy + ry + rx * .12);
+        context.bezierCurveTo(
+          cx - rx * .2,
+          cy + ry + rx * .34,
+          cx + rx * .18,
+          cy + ry + rx * .5,
+          cx - rx * .02,
+          cy + ry + rx * .68,
+        );
+        context.stroke();
+
+        context.fillStyle = "#174f7a";
+        context.beginPath();
+        context.moveTo(cx, cy + ry - 3);
+        context.lineTo(cx - rx * .11, cy + ry + rx * .16);
+        context.lineTo(cx + rx * .11, cy + ry + rx * .16);
+        context.closePath();
+        context.fill();
+      }
+
+      function getMainGeometry(width, height) {
+        const cy = height * .5;
+        const halfHeight = clamp(height * .29, 145, 320);
+        return {
+          cx: width < 720 ? width * .63 : width * .71,
+          cy,
+          halfHeight,
+          halfWidth: halfHeight * .88,
+        };
+      }
+
+      function drawPopsicleFace(cx, cy, size, reveal) {
+        context.save();
+        context.globalAlpha = reveal;
+        context.strokeStyle = "#20262a";
+        context.fillStyle = "#20262a";
+        context.lineWidth = Math.max(3, size * .026);
+        context.lineCap = "round";
+        context.lineJoin = "round";
+
+        context.beginPath();
+        context.arc(cx - size * .18, cy - size * .035, size * .055, 0, Math.PI * 2);
+        context.fill();
+
+        context.beginPath();
+        context.moveTo(cx + size * .25, cy - size * .1);
+        context.lineTo(cx + size * .15, cy - size * .035);
+        context.lineTo(cx + size * .25, cy + size * .03);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(cx - size * .09, cy + size * .105);
+        context.quadraticCurveTo(cx, cy + size * .22, cx + size * .09, cy + size * .105);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawCreamFlap(cx, top, width, height, openAmount) {
+        const flipScale = Math.cos(openAmount * Math.PI);
+        const red = Math.round(255 - openAmount * 13);
+        const green = Math.round(253 - openAmount * 116);
+        const blue = Math.round(247 - openAmount * 113);
+        const left = cx - width * .5;
+        const right = cx + width * .5;
+        const seamY = top + height * .06;
+        const valleyY = top + height * .92;
+
+        context.save();
+        context.translate(cx, top);
+        context.scale(1, flipScale);
+        context.translate(-cx, -top);
+        context.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+        context.beginPath();
+        context.moveTo(left, top);
+        context.lineTo(right, top);
+        context.lineTo(right, seamY);
+        const segment = width / 3;
+        for (let segmentIndex = 2; segmentIndex >= 0; segmentIndex -= 1) {
+          const segmentLeft = left + segment * segmentIndex;
+          context.quadraticCurveTo(
+            segmentLeft + segment * .5,
+            valleyY,
+            segmentLeft,
+            seamY,
+          );
+        }
+        context.closePath();
+        context.fill();
+        context.strokeStyle = openAmount < .5 ? "#e4dde0" : "#df746f";
+        context.lineWidth = Math.max(3, width * .014);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawBanknote(cx, y, width, height, reveal) {
+        context.save();
+        context.globalAlpha = reveal;
+        context.shadowColor = "rgba(95, 29, 55, .36)";
+        context.shadowBlur = 15;
+        context.fillStyle = "#f6a2bf";
+        context.fillRect(cx - width * .5, y, width, height);
+        context.shadowBlur = 0;
+        context.strokeStyle = "#fff0f6";
+        context.lineWidth = 5;
+        context.strokeRect(cx - width * .5, y, width, height);
+        context.strokeStyle = "#d96a98";
+        context.lineWidth = 3;
+        context.strokeRect(cx - width * .4, y + height * .08, width * .8, height * .84);
+        context.fillStyle = "#d95b91";
+        context.beginPath();
+        context.arc(cx, y + height * .27, Math.min(width, height) * .27, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = "#fff1f6";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.font = `900 ${Math.round(Math.min(width, height) * .34)}px 'TongZhen', sans-serif`;
+        context.fillText("¥", cx, y + height * .28);
+        context.restore();
+      }
+
+      function drawSecondPage(width, height) {
+        const geometry = getMainGeometry(width, height);
+        const { cx, cy, halfHeight, halfWidth } = geometry;
+        const bodyHeight = halfHeight * 1.58;
+        const bodyWidth = halfWidth * 1.34;
+        const cornerRadius = Math.max(10, bodyWidth * .05);
+        const left = cx - bodyWidth * .5;
+        const top = cy - bodyHeight * .5;
+        const stickHide = clamp(progress / .5, 0, 1);
+        const creamOpen = clamp((progress - .18) / .62, 0, 1);
+        const moneyReveal = clamp((progress - .45) / .5, 0, 1);
+        const blessingReveal = clamp((progress - .34) / .32, 0, 1);
+        const faceReveal = clamp(1 - blessingReveal * .3, .7, 1);
+
+        context.save();
+        context.shadowColor = "rgba(255, 255, 255, .98)";
+        context.shadowBlur = Math.max(25, bodyWidth * .1);
+
+        context.save();
+        context.translate(0, -stickHide * bodyHeight * .36);
+        const stickWidth = bodyWidth * .17;
+        const stickTop = top + bodyHeight - 2;
+        const stickBottom = stickTop + bodyHeight * .33;
+        context.fillStyle = "#e4b778";
+        context.beginPath();
+        context.moveTo(cx - stickWidth * .5, stickTop);
+        context.lineTo(cx + stickWidth * .5, stickTop);
+        context.lineTo(cx + stickWidth * .5, stickBottom - stickWidth * .5);
+        context.quadraticCurveTo(cx + stickWidth * .5, stickBottom, cx, stickBottom);
+        context.quadraticCurveTo(cx - stickWidth * .5, stickBottom, cx - stickWidth * .5, stickBottom - stickWidth * .5);
+        context.closePath();
+        context.fill();
+        context.strokeStyle = "#f8d9a8";
+        context.lineWidth = 4;
+        context.stroke();
+        context.restore();
+
+        if (moneyReveal > 0) {
+          const noteWidth = bodyWidth * .82;
+          const noteHeight = bodyHeight * .52;
+          const noteY = top + bodyHeight * .18 - moneyReveal * bodyHeight * .5;
+          drawBanknote(cx, noteY, noteWidth, noteHeight, moneyReveal);
+        }
+
+        roundedRect(left, top, bodyWidth, bodyHeight, cornerRadius);
+        context.fillStyle = "#f3867e";
+        context.fill();
+
+        drawPopsicleFace(cx, cy + bodyHeight * .04, bodyWidth * .54, faceReveal);
+
+        if (blessingReveal > 0) {
+          const badgeY = top + bodyHeight * .25;
+          const badgeRadius = bodyWidth * .145;
+          context.save();
+          context.globalAlpha = blessingReveal;
+          context.fillStyle = "#f7cf45";
+          context.beginPath();
+          context.arc(cx, badgeY, badgeRadius, 0, Math.PI * 2);
+          context.fill();
+          context.strokeStyle = "#fff1a6";
+          context.lineWidth = 6;
+          context.stroke();
+          context.fillStyle = "#d83b3b";
+          context.font = `900 ${Math.round(badgeRadius * 1.05)}px 'TongZhen', sans-serif`;
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText("福", cx, badgeY + badgeRadius * .08);
+          context.restore();
+        }
+
+        drawCreamFlap(cx, top, bodyWidth, bodyHeight * .18, creamOpen);
+        context.restore();
+
+        const caption = progress < .5 ? "我是什么？" : "我是红包！";
+        const captionX = Math.min(width - 175, cx + bodyWidth * .51);
+        const captionY = Math.max(122, top - bodyHeight * .04);
+        drawCaption(caption, captionX, captionY, clamp(width / 1100, .72, 1.1));
+      }
+
+      function drawCloudPuff(x, y, radius, opacity) {
+        context.save();
+        context.globalAlpha = opacity;
+        context.fillStyle = "#fffdf7";
+        context.shadowColor = "rgba(255, 255, 255, .92)";
+        context.shadowBlur = radius * .45;
+        context.beginPath();
+        context.arc(x - radius * .66, y + radius * .18, radius * .62, 0, Math.PI * 2);
+        context.arc(x, y - radius * .12, radius, 0, Math.PI * 2);
+        context.arc(x + radius * .82, y + radius * .2, radius * .7, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      }
+
+      function drawMoonFace(cx, cy, size, opacity) {
+        if (opacity <= 0) return;
+        context.save();
+        context.globalAlpha = opacity;
+        context.strokeStyle = "#211d19";
+        context.lineWidth = Math.max(3, size * .026);
+        context.lineCap = "round";
+
+        const eyeY = cy - size * .075;
+        const eyeHalfWidth = size * .082;
+        [-1, 1].forEach((side) => {
+          const eyeX = cx + side * size * .17;
+          context.beginPath();
+          context.moveTo(eyeX - eyeHalfWidth, eyeY);
+          context.quadraticCurveTo(
+            eyeX,
+            eyeY + size * .088,
+            eyeX + eyeHalfWidth,
+            eyeY,
+          );
+          context.stroke();
+
+          [-.038, 0, .038].forEach((lashOffset) => {
+            const lashX = eyeX + size * lashOffset;
+            const normalized = lashOffset / .038;
+            const lashY = eyeY + size * (.05 - Math.abs(normalized) * .016);
+            context.beginPath();
+            context.moveTo(lashX, lashY);
+            context.lineTo(
+              lashX + normalized * size * .009,
+              lashY + size * .025,
+            );
+            context.stroke();
+          });
+        });
+
+        context.beginPath();
+        context.moveTo(cx - size * .092, cy + size * .068);
+        context.quadraticCurveTo(
+          cx,
+          cy + size * .2,
+          cx + size * .092,
+          cy + size * .068,
+        );
+        context.stroke();
+        context.restore();
+      }
+
+      function drawLeaf(cx, cy, length, width, angle, growth) {
+        context.save();
+        context.translate(cx, cy);
+        context.rotate(angle);
+        context.scale(growth, growth);
+
+        const leafPath = new Path2D();
+        leafPath.moveTo(0, 0);
+        leafPath.bezierCurveTo(length * .28, -width, length * .8, -width * .72, length, 0);
+        leafPath.bezierCurveTo(length * .8, width * .72, length * .28, width, 0, 0);
+        leafPath.closePath();
+        context.fillStyle = "#66ad28";
+        context.fill(leafPath);
+
+        context.save();
+        context.clip(leafPath);
+        context.strokeStyle = "#3f8520";
+        context.lineWidth = Math.max(1.5, width * .075);
+        context.beginPath();
+        context.moveTo(0, 0);
+        context.lineTo(length * .92, 0);
+        context.stroke();
+        [0.28, 0.5, 0.7].forEach((position) => {
+          const veinEnd = Math.min(position + .11, .88);
+          context.beginPath();
+          context.moveTo(length * position, 0);
+          context.lineTo(length * veinEnd, -width * .48);
+          context.moveTo(length * position, 0);
+          context.lineTo(length * veinEnd, width * .48);
+          context.stroke();
+        });
+        context.restore();
+        context.restore();
+      }
+
+      function drawNavelWorm(cx, cy, radius, growth) {
+        const wormGrowth = clamp((growth - .28) / .72, 0, 1);
+        if (wormGrowth <= 0) return;
+
+        const segmentRadius = radius * .06;
+        const segmentCount = 6;
+        context.save();
+        context.lineCap = "round";
+        for (let index = 0; index < segmentCount; index += 1) {
+          const segmentProgress = clamp(wormGrowth * segmentCount - index, 0, 1);
+          if (segmentProgress <= 0) continue;
+          const travel = index / (segmentCount - 1);
+          const x = cx - radius * (.025 + travel * .39) * wormGrowth;
+          const y = cy + radius * (.035 + travel * .13 + Math.sin(travel * Math.PI * 1.6) * .045) * wormGrowth;
+          context.globalAlpha = segmentProgress;
+          context.fillStyle = index % 2 === 0 ? "#ffffff" : "#87bd3c";
+          context.strokeStyle = "#65942d";
+          context.lineWidth = Math.max(2, radius * .012);
+          context.beginPath();
+          context.arc(x, y, segmentRadius * (.92 + segmentProgress * .08), 0, Math.PI * 2);
+          context.fill();
+          context.stroke();
+        }
+
+        const headX = cx - radius * .44 * wormGrowth;
+        const headY = cy + radius * .18 * wormGrowth;
+        context.globalAlpha = wormGrowth;
+        context.fillStyle = "#87bd3c";
+        context.strokeStyle = "#65942d";
+        context.lineWidth = Math.max(2, radius * .012);
+        context.beginPath();
+        context.arc(headX, headY, segmentRadius * 1.32, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+
+        context.fillStyle = "#20262a";
+        context.beginPath();
+        context.arc(headX - segmentRadius * .34, headY - segmentRadius * .2, segmentRadius * .13, 0, Math.PI * 2);
+        context.arc(headX - segmentRadius * .48, headY + segmentRadius * .13, segmentRadius * .13, 0, Math.PI * 2);
+        context.fill();
+
+        context.strokeStyle = "#a5a59e";
+        context.lineWidth = Math.max(2, radius * .012);
+        context.beginPath();
+        context.moveTo(headX - segmentRadius * .28, headY - segmentRadius * 1.02);
+        context.quadraticCurveTo(
+          headX - segmentRadius * .48,
+          headY - segmentRadius * 1.55,
+          headX - segmentRadius * .78,
+          headY - segmentRadius * 1.68,
+        );
+        context.moveTo(headX - segmentRadius * .72, headY - segmentRadius * .82);
+        context.quadraticCurveTo(
+          headX - segmentRadius * 1.08,
+          headY - segmentRadius * 1.16,
+          headX - segmentRadius * 1.38,
+          headY - segmentRadius * .96,
+        );
+        context.stroke();
+
+        context.fillStyle = "#f0d35b";
+        context.beginPath();
+        context.arc(headX - segmentRadius * .78, headY - segmentRadius * 1.68, segmentRadius * .18, 0, Math.PI * 2);
+        context.arc(headX - segmentRadius * 1.38, headY - segmentRadius * .96, segmentRadius * .18, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      }
+
+      function drawOrangeGrowth(cx, topY, radius, growth) {
+        if (growth <= 0) return;
+        context.save();
+        context.lineCap = "round";
+        context.lineJoin = "round";
+
+        const stemGrowth = clamp(growth / .62, 0, 1);
+        const navelX = cx;
+        const navelY = topY + radius * .12;
+        const stemTopX = cx + radius * .08 * stemGrowth;
+        const stemTopY = topY - radius * .34 * stemGrowth;
+
+        const nodeGrowth = clamp((growth - .06) / .4, 0, 1);
+        context.save();
+        context.globalAlpha = nodeGrowth;
+        context.fillStyle = "#a76522";
+        context.beginPath();
+        context.ellipse(
+          navelX,
+          navelY,
+          radius * .12 * nodeGrowth,
+          radius * .062 * nodeGrowth,
+          0,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+        context.fillStyle = "#d68a2a";
+        context.beginPath();
+        context.ellipse(
+          navelX,
+          navelY - radius * .006,
+          radius * .064 * nodeGrowth,
+          radius * .027 * nodeGrowth,
+          0,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+        context.restore();
+
+        context.strokeStyle = "#8a5a28";
+        context.lineWidth = Math.max(7, radius * .058);
+        context.beginPath();
+        context.moveTo(navelX, navelY);
+        context.bezierCurveTo(
+          cx - radius * .12 * stemGrowth,
+          topY + radius * .025,
+          cx + radius * .13 * stemGrowth,
+          topY - radius * .1 * stemGrowth,
+          stemTopX,
+          stemTopY,
+        );
+        context.stroke();
+
+        const leafGrowth = clamp((growth - .22) / .78, 0, 1);
+        const branchX = cx + radius * .004;
+        const branchY = topY - radius * .045 * stemGrowth;
+        drawLeaf(branchX, branchY, radius * .67, radius * .22, -2.7, leafGrowth);
+        drawLeaf(branchX, branchY, radius * .68, radius * .225, -.4, leafGrowth);
+        drawNavelWorm(navelX, navelY, radius, growth);
+        context.restore();
+      }
+
+      function drawOrangeTexture(cx, cy, radius, opacity) {
+        if (opacity <= 0) return;
+        context.save();
+        context.globalAlpha = opacity;
+        context.fillStyle = "rgba(181, 104, 15, .3)";
+        const texturePoints = [
+          [-.48, -.45, .018], [-.2, -.6, .014], [.12, -.53, .018], [.43, -.38, .013],
+          [-.6, -.12, .015], [-.28, -.18, .012], [.08, -.24, .014], [.5, -.08, .017],
+          [-.5, .22, .013], [-.12, .08, .016], [.27, .12, .012], [.58, .26, .015],
+          [-.34, .5, .017], [.02, .43, .012], [.36, .52, .016],
+        ];
+        texturePoints.forEach(([x, y, size]) => {
+          context.beginPath();
+          context.arc(cx + radius * x, cy + radius * y, radius * size, 0, Math.PI * 2);
+          context.fill();
+        });
+
+        context.strokeStyle = "rgba(255, 231, 145, .68)";
+        context.lineWidth = Math.max(5, radius * .045);
+        context.lineCap = "round";
+        context.beginPath();
+        context.arc(cx - radius * .28, cy - radius * .24, radius * .58, 3.55, 4.18);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawThirdPage(width, height) {
+        const { cx, cy, halfHeight } = getMainGeometry(width, height);
+        const radius = halfHeight * .88;
+        const cloudFade = 1 - clamp(progress / .68, 0, 1);
+        const cloudDrift = clamp(progress / .68, 0, 1);
+        const growth = clamp((progress - .2) / .72, 0, 1);
+
+        context.save();
+        context.shadowColor = "rgba(255, 224, 112, .95)";
+        context.shadowBlur = radius * .22;
+        context.fillStyle = "#f2a22e";
+        context.beginPath();
+        context.arc(cx, cy, radius, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+
+        drawOrangeTexture(cx, cy, radius, growth);
+        drawMoonFace(cx, cy, radius, clamp(1 - growth * 1.35, 0, 1));
+
+        const cloudY = cy + radius * .72 + cloudDrift * radius * .18;
+        drawCloudPuff(cx - radius * (.54 + cloudDrift * .58), cloudY, radius * .27, cloudFade);
+        drawCloudPuff(cx + radius * (.25 + cloudDrift * .7), cloudY + radius * .04, radius * .31, cloudFade);
+        drawCloudPuff(cx + radius * (.72 + cloudDrift * .66), cloudY + radius * .07, radius * .21, cloudFade);
+
+        drawOrangeGrowth(cx, cy - radius, radius, growth);
+
+        const caption = progress < .5 ? "我是什么？" : "我是橘子！";
+        const captionX = Math.min(width - 175, cx + radius * .76);
+        const captionY = Math.max(115, cy - radius * .84);
+        drawCaption(caption, captionX, captionY, clamp(width / 1100, .72, 1.12));
+      }
+
+      function drawFlower(x, y, radius, color, growth, rotation = 0, type = "daisy") {
+        if (growth <= 0) return;
+        context.save();
+        context.translate(x, y);
+        context.rotate(rotation);
+        context.scale(growth, growth);
+        context.shadowColor = "rgba(255, 255, 255, .68)";
+        context.shadowBlur = radius * .34;
+        context.fillStyle = color;
+
+        if (type === "tulip") {
+          context.beginPath();
+          context.moveTo(-radius * .8, radius * .2);
+          context.quadraticCurveTo(-radius * .78, -radius * .75, -radius * .28, -radius * .38);
+          context.lineTo(0, -radius);
+          context.lineTo(radius * .3, -radius * .38);
+          context.quadraticCurveTo(radius * .82, -radius * .76, radius * .8, radius * .2);
+          context.quadraticCurveTo(0, radius * .86, -radius * .8, radius * .2);
+          context.fill();
+        } else if (type === "bell") {
+          context.beginPath();
+          context.moveTo(-radius * .62, -radius * .7);
+          context.quadraticCurveTo(0, -radius, radius * .62, -radius * .7);
+          context.lineTo(radius * .82, radius * .55);
+          context.quadraticCurveTo(radius * .45, radius * .34, 0, radius * .75);
+          context.quadraticCurveTo(-radius * .45, radius * .34, -radius * .82, radius * .55);
+          context.closePath();
+          context.fill();
+        } else if (type === "sunflower") {
+          for (let petal = 0; petal < 12; petal += 1) {
+            const angle = (petal / 12) * Math.PI * 2;
+            context.beginPath();
+            context.ellipse(
+              Math.cos(angle) * radius * .76,
+              Math.sin(angle) * radius * .76,
+              radius * .62,
+              radius * .2,
+              angle,
+              0,
+              Math.PI * 2,
+            );
+            context.fill();
+          }
+          context.fillStyle = "#7b522a";
+          context.beginPath();
+          context.arc(0, 0, radius * .43, 0, Math.PI * 2);
+          context.fill();
+        } else {
+          const petals = type === "cosmos" ? 8 : 6;
+          for (let petal = 0; petal < petals; petal += 1) {
+            const angle = (petal / petals) * Math.PI * 2;
+            context.beginPath();
+            context.ellipse(
+              Math.cos(angle) * radius * .66,
+              Math.sin(angle) * radius * .66,
+              radius * .53,
+              radius * (type === "cosmos" ? .34 : .29),
+              angle,
+              0,
+              Math.PI * 2,
+            );
+            context.fill();
+          }
+          context.fillStyle = type === "cosmos" ? "#f09a3e" : "#f6c94c";
+          context.beginPath();
+          context.arc(0, 0, radius * .36, 0, Math.PI * 2);
+          context.fill();
+        }
+        context.restore();
+      }
+
+      function drawPlantLeaf(x, y, length, width, angle, growth, type = "pointed") {
+        if (growth <= 0) return;
+        context.save();
+        context.translate(x, y);
+        context.rotate(angle);
+        context.scale(growth, growth);
+        context.fillStyle = type === "round" ? "#7abf58" : "#5da348";
+        context.beginPath();
+        context.moveTo(0, 0);
+        if (type === "round") {
+          context.bezierCurveTo(length * .25, -width, length * .8, -width, length, 0);
+          context.bezierCurveTo(length * .8, width, length * .25, width, 0, 0);
+        } else if (type === "long") {
+          context.quadraticCurveTo(length * .55, -width * .55, length, 0);
+          context.quadraticCurveTo(length * .55, width * .55, 0, 0);
+        } else {
+          context.quadraticCurveTo(length * .5, -width, length, 0);
+          context.quadraticCurveTo(length * .5, width, 0, 0);
+        }
+        context.fill();
+        context.strokeStyle = "#3d793a";
+        context.lineWidth = Math.max(1.5, width * .1);
+        context.beginPath();
+        context.moveTo(0, 0);
+        context.lineTo(length * .86, 0);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawSurprisedFace(cx, cy, size, opacity) {
+        if (opacity <= 0) return;
+        context.save();
+        context.globalAlpha = opacity;
+        context.fillStyle = "#34383b";
+        context.beginPath();
+        context.arc(cx - size * .18, cy - size * .06, size * .055, 0, Math.PI * 2);
+        context.arc(cx + size * .18, cy - size * .06, size * .055, 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = "#34383b";
+        context.lineWidth = Math.max(3, size * .025);
+        context.beginPath();
+        context.ellipse(cx, cy + size * .13, size * .07, size * .1, 0, 0, Math.PI * 2);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawBee(x, y, size, flap, reveal = 1) {
+        if (reveal <= 0) return;
+        context.save();
+        context.translate(x, y);
+        context.globalAlpha = reveal;
+        context.lineCap = "round";
+
+        const wing = size * (.32 + Math.abs(Math.sin(flap)) * .32);
+        context.fillStyle = "rgba(255, 255, 255, .82)";
+        context.strokeStyle = "rgba(150, 160, 170, .55)";
+        context.lineWidth = Math.max(1.5, size * .03);
+        [-1, 1].forEach((side) => {
+          context.save();
+          context.translate(0, side * size * .1);
+          context.beginPath();
+          context.ellipse(-size * .04, -size * .5 * side, size * .34, wing, side * .6, 0, Math.PI * 2);
+          context.fill();
+          context.stroke();
+          context.restore();
+        });
+
+        context.fillStyle = "#f4c01f";
+        context.beginPath();
+        context.ellipse(0, 0, size * .66, size * .44, 0, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = "#2b2620";
+        [-.22, .04, .3].forEach((sx) => {
+          context.beginPath();
+          context.ellipse(sx * size, 0, size * .1, size * .42, 0, 0, Math.PI * 2);
+          context.fill();
+        });
+
+        context.fillStyle = "#2b2620";
+        context.beginPath();
+        context.arc(size * .62, 0, size * .28, 0, Math.PI * 2);
+        context.fill();
+
+        context.strokeStyle = "#2b2620";
+        context.lineWidth = Math.max(1.5, size * .04);
+        context.beginPath();
+        context.moveTo(size * .78, -size * .12);
+        context.quadraticCurveTo(size * .98, -size * .3, size * .96, -size * .5);
+        context.moveTo(size * .8, size * .06);
+        context.quadraticCurveTo(size * 1.02, -size * .06, size * 1.04, -size * .22);
+        context.stroke();
+
+        context.restore();
+      }
+
+      function drawFourthPage(width, height) {
+        const { cx, cy, halfHeight } = getMainGeometry(width, height);
+        const tvCenterY = cy + halfHeight * .3;
+        const bodyWidth = halfHeight * 1.72;
+        const bodyHeight = halfHeight * 1.32;
+        const left = cx - bodyWidth * .5;
+        const top = tvCenterY - bodyHeight * .5;
+        const standRetract = clamp(progress / .48, 0, 1);
+        const plantGrowth = clamp((progress - .16) / .78, 0, 1);
+        const screenFade = clamp(1 - progress * 1.7, 0, 1);
+
+        context.save();
+
+        const standTop = top + bodyHeight - bodyHeight * .02;
+        const standHeight = bodyHeight * .18;
+        context.save();
+        context.translate(0, -standRetract * standHeight * .92);
+        context.fillStyle = "#737a80";
+        roundedRect(
+          cx - bodyWidth * .075,
+          standTop,
+          bodyWidth * .15,
+          standHeight * .7,
+          bodyWidth * .025,
+        );
+        context.fill();
+        roundedRect(
+          cx - bodyWidth * .22,
+          standTop + standHeight * .62,
+          bodyWidth * .44,
+          standHeight * .18,
+          bodyHeight * .04,
+        );
+        context.fillStyle = "#5f666c";
+        context.fill();
+        context.restore();
+
+        context.fillStyle = "#737a80";
+        context.fillRect(left, top, bodyWidth, bodyHeight);
+
+        context.save();
+        context.globalAlpha = screenFade;
+        context.fillStyle = "#d9dddf";
+        context.fillRect(
+          left + bodyWidth * .09,
+          top + bodyHeight * .1,
+          bodyWidth * .82,
+          bodyHeight * .72,
+        );
+        context.restore();
+
+        context.save();
+        context.globalAlpha = 1 - screenFade;
+        context.fillStyle = "#626a6f";
+        context.fillRect(
+          left + bodyWidth * .07,
+          top + bodyHeight * .08,
+          bodyWidth * .86,
+          bodyHeight * .76,
+        );
+        context.fillStyle = "rgba(255, 255, 255, .16)";
+        context.fillRect(
+          left + bodyWidth * .1,
+          top + bodyHeight * .12,
+          bodyWidth * .8,
+          bodyHeight * .06,
+        );
+        context.restore();
+        context.restore();
+
+        drawSurprisedFace(cx, tvCenterY, bodyHeight * .52, screenFade);
+
+        const stemBaseY = top;
+        const stems = [
+          [-.4, -.46, 1.08, "#f0748f", -.2, .024, "tulip", "long"],
+          [-.29, -.7, 1.12, "#ffb441", -.1, .034, "sunflower", "round"],
+          [-.15, -.86, 1.04, "#a98add", .07, .022, "bell", "pointed"],
+          [0, -.95, 1.25, "#f38dba", -.04, .04, "cosmos", "long"],
+          [.14, -.79, 1.08, "#e76767", .1, .028, "tulip", "round"],
+          [.29, -.64, 1.16, "#72c7dd", .16, .036, "daisy", "pointed"],
+          [.41, -.43, 1.02, "#f3ce4c", -.11, .023, "sunflower", "long"],
+          [-.07, -.58, .94, "#8fc966", .18, .031, "daisy", "round"],
+          [.07, -.5, .9, "#ad75d8", -.18, .02, "bell", "pointed"],
+        ];
+        stems.forEach(([offset, rise, scale, color, rotation, thickness, type, leafType], index) => {
+          const localGrowth = clamp(plantGrowth * 1.42 - index * .045, 0, 1);
+          if (localGrowth <= 0) return;
+          const startX = cx + bodyWidth * offset;
+          const endX = startX + bodyWidth * rotation * localGrowth;
+          const endY = stemBaseY + halfHeight * rise * localGrowth;
+          context.strokeStyle = index % 3 === 0 ? "#397b3c" : "#4d8b45";
+          context.lineWidth = Math.max(3, halfHeight * thickness);
+          context.lineCap = "round";
+          context.beginPath();
+          context.moveTo(startX, stemBaseY);
+          context.bezierCurveTo(
+            startX - bodyWidth * rotation * .38,
+            stemBaseY - (stemBaseY - endY) * .24,
+            endX + bodyWidth * rotation * .22,
+            stemBaseY - (stemBaseY - endY) * .7,
+            endX,
+            endY,
+          );
+          context.stroke();
+
+          const leafY = stemBaseY - (stemBaseY - endY) * (.34 + (index % 3) * .13);
+          const leafLength = halfHeight * (.26 + (index % 3) * .045);
+          const leafWidth = halfHeight * (.072 + (index % 2) * .03);
+          drawPlantLeaf(
+            startX,
+            leafY,
+            leafLength,
+            leafWidth,
+            offset < 0 ? -2.68 : -.47,
+            localGrowth,
+            leafType,
+          );
+          if (true) {
+            drawPlantLeaf(
+              startX + bodyWidth * .02,
+              leafY - halfHeight * .12,
+              leafLength * .82,
+              leafWidth * .88,
+              offset < 0 ? -.42 : -2.72,
+              localGrowth,
+              index % 4 === 0 ? "round" : "long",
+            );
+          }
+          drawFlower(endX, endY, bodyHeight * .155 * scale, color, localGrowth, rotation, type);
+        });
+
+        const beeReveal = plantGrowth;
+        if (beeReveal > 0) {
+          const t = performance.now() / 1000;
+          const beeSize = halfHeight * .14;
+          const orbitCx = cx;
+          const orbitCy = top + halfHeight * .08;
+          const bee1X = orbitCx + Math.cos(t * 1.3) * bodyWidth * .38;
+          const bee1Y = orbitCy + Math.sin(t * 1.3) * halfHeight * .3;
+          drawBee(bee1X, bee1Y, beeSize, t * 22, beeReveal);
+          const bee2X = orbitCx + Math.cos(t * 1.08 + Math.PI) * bodyWidth * .28;
+          const bee2Y = orbitCy + Math.sin(t * 1.08 + Math.PI) * halfHeight * .24;
+          drawBee(bee2X, bee2Y, beeSize, t * 22 + 1.3, beeReveal);
+        }
+
+        const caption = progress < .5 ? "我是什么？" : "我是花盆！";
+        const captionX = Math.min(width - 175, cx + bodyWidth * .43);
+        const captionY = Math.max(115, top - halfHeight * .5);
+        drawCaption(caption, captionX, captionY, clamp(width / 1100, .72, 1.1));
+      }
+
+      function resetPageProgress() {
+        targetProgress = 0;
+        progress = 0;
+        leverProgress = 0;
+      }
+
+      function syncPageButtons() {
+        pageBack.classList.toggle("page-visible", currentPage > 1);
+        pageTurn.classList.toggle("page-hidden", currentPage >= 4);
+        pageBack.classList.remove("touch-active");
+        pageTurn.classList.remove("touch-active");
+        pageTouchStartedAt = null;
+        backTouchStartedAt = null;
+      }
+
+      function showNextPage() {
+        if (currentPage >= 4 || pageSwitching) return;
+        pageSwitching = true;
+        pageTurn.classList.add("touch-active");
+        window.setTimeout(() => {
+          currentPage += 1;
+          resetPageProgress();
+          syncPageButtons();
+          pageSwitching = false;
+        }, 260);
+      }
+
+      function showPreviousPage() {
+        if (currentPage <= 1 || pageSwitching) return;
+        pageSwitching = true;
+        pageBack.classList.add("touch-active");
+        window.setTimeout(() => {
+          currentPage -= 1;
+          resetPageProgress();
+          syncPageButtons();
+          pageSwitching = false;
+        }, 260);
+      }
+
+      function posePointToScreen(point) {
+        const videoWidth = video.videoWidth || 1280;
+        const videoHeight = video.videoHeight || 720;
+        const sourceAspect = videoWidth / videoHeight;
+        const viewportAspect = window.innerWidth / window.innerHeight;
+        let x;
+        let y;
+
+        if (viewportAspect > sourceAspect) {
+          const renderedHeight = window.innerWidth / sourceAspect;
+          x = (1 - point.x) * window.innerWidth;
+          y = point.y * renderedHeight - (renderedHeight - window.innerHeight) * .5;
+        } else {
+          const renderedWidth = window.innerHeight * sourceAspect;
+          x = (1 - point.x) * renderedWidth - (renderedWidth - window.innerWidth) * .5;
+          y = point.y * window.innerHeight;
+        }
+        return { x, y };
+      }
+
+      function isHandTouching(button, landmarks) {
+        const bounds = button.getBoundingClientRect();
+        const centerX = bounds.left + bounds.width * .5;
+        const centerY = bounds.top + bounds.height * .5;
+        const touchRadius = Math.max(bounds.width, bounds.height) * .95;
+        const handIndices = [15, 16, 17, 18, 19, 20, 21, 22];
+        return handIndices.some((index) => {
+          const point = landmarks[index];
+          if (!point || (point.visibility ?? 1) < .35) return false;
+          const screenPoint = posePointToScreen(point);
+          return Math.hypot(screenPoint.x - centerX, screenPoint.y - centerY) <= touchRadius;
+        });
+      }
+
+      function updatePageTouch(landmarks) {
+        if (pageSwitching) return;
+        const canGoNext = currentPage < 4;
+        const nextTouching = canGoNext && isHandTouching(pageTurn, landmarks);
+        pageTurn.classList.toggle("touch-active", nextTouching);
+
+        if (nextTouching) {
+          if (pageTouchStartedAt === null) pageTouchStartedAt = performance.now();
+          if (performance.now() - pageTouchStartedAt >= 520) showNextPage();
+        } else {
+          pageTouchStartedAt = null;
+        }
+
+        const canGoBack = currentPage > 1;
+        const backTouching = canGoBack && isHandTouching(pageBack, landmarks);
+        pageBack.classList.toggle("touch-active", backTouching);
+        if (!backTouching) {
+          backTouchStartedAt = null;
+          return;
+        }
+        if (backTouchStartedAt === null) backTouchStartedAt = performance.now();
+        if (performance.now() - backTouchStartedAt >= 520) showPreviousPage();
+      }
+
+      function drawScene(now) {
+        const elapsed = Math.min((now - lastFrame) / 1000, .05);
+        lastFrame = now;
+        const sharedDamping = 1 - Math.pow(.025, elapsed);
+        progress = lerp(progress, targetProgress, sharedDamping);
+        leverProgress = progress;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        context.clearRect(0, 0, width, height);
+
+        const trackX = Math.max(70, width * .11);
+        const trackY = height * .25;
+        const trackHeight = height * .43;
+
+        context.save();
+        context.shadowColor = "rgba(18, 26, 31, .32)";
+        context.shadowBlur = 15;
+        roundedRect(trackX - 14, trackY - 12, 28, trackHeight + 24, 14);
+        context.fillStyle = "#e8edf0";
+        context.fill();
+        context.shadowBlur = 0;
+        context.strokeStyle = "rgba(255, 255, 255, .96)";
+        context.lineWidth = 5;
+        context.stroke();
+
+        roundedRect(trackX - 5, trackY + 7, 10, trackHeight - 14, 5);
+        context.fillStyle = "#9ca7ad";
+        context.fill();
+
+        for (let dot = 0; dot < 10; dot += 1) {
+          const dotRatio = dot / 9;
+          const dotY = trackY + trackHeight * (1 - dotRatio);
+          const sensed = dotRatio <= leverProgress + .02;
+          context.fillStyle = sensed ? "#fff" : "#747f85";
+          context.shadowColor = sensed ? "rgba(255, 255, 255, .95)" : "transparent";
+          context.shadowBlur = sensed ? 6 : 0;
+          context.beginPath();
+          context.arc(trackX, dotY, sensed ? 4.2 : 3.2, 0, Math.PI * 2);
+          context.fill();
+        }
+        context.restore();
+
+        const knobY = trackY + trackHeight * (1 - leverProgress);
+        const knobScale = .82 + leverProgress * .32;
+        context.save();
+        context.translate(trackX, knobY);
+        context.scale(knobScale, knobScale);
+        context.shadowColor = "rgba(91, 16, 23, .48)";
+        context.shadowBlur = 17;
+        roundedRect(-65, -22, 130, 44, 22);
+        context.fillStyle = "#fffdf9";
+        context.fill();
+        context.shadowBlur = 0;
+        context.strokeStyle = "#d7353f";
+        context.lineWidth = 6;
+        context.stroke();
+
+        context.fillStyle = "#d7353f";
+        context.beginPath();
+        context.arc(-46, 0, 14, 0, Math.PI * 2);
+        context.arc(46, 0, 14, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = "#d7353f";
+        roundedRect(-24, -12, 48, 24, 12);
+        context.fill();
+        context.fillStyle = "rgba(255,255,255,.94)";
+        context.beginPath();
+        context.arc(-8, -5, 5, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+
+        context.save();
+        context.textAlign = "center";
+        context.textBaseline = "top";
+        context.lineJoin = "round";
+        context.translate(trackX + 20, trackY + trackHeight + 50);
+        context.font = "900 54px 'TongZhen', sans-serif";
+        context.strokeStyle = "rgba(255,255,255,.98)";
+        context.lineWidth = 12;
+        context.strokeText("举起手", 0, 0);
+        context.fillStyle = "#111315";
+        context.fillText("举起手", 0, 0);
+        context.font = "900 46px 'TongZhen', sans-serif";
+        context.strokeText("向上推，变变变！", 0, 64);
+        context.fillStyle = "#f08a2f";
+        context.fillText("向上推，变变变！", 0, 64);
+        context.restore();
+
+        if (currentPage === 2) {
+          drawSecondPage(width, height);
+          requestAnimationFrame(drawScene);
+          return;
+        }
+
+        if (currentPage === 3) {
+          drawThirdPage(width, height);
+          requestAnimationFrame(drawScene);
+          return;
+        }
+
+        if (currentPage === 4) {
+          drawFourthPage(width, height);
+          requestAnimationFrame(drawScene);
+          return;
+        }
+
+        const geometry = getMainGeometry(width, height);
+        const { cx, cy, halfHeight: ry, halfWidth: rx } = geometry;
+        const crack = clamp((progress - .12) / .32, 0, 1);
+        const opening = clamp((progress - .44) / .56, 0, 1);
+        const chickReveal = clamp(opening, 0, 1);
+
+        drawChick(cx, cy, rx, chickReveal);
+
+        context.save();
+        context.shadowColor = "rgba(255, 255, 255, .98)";
+        context.shadowBlur = Math.max(24, rx * .15);
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 0;
+
+        const shellStart = .44;
+        const tailHideProgress = clamp(progress / shellStart, 0, 1);
+        const tailTravel = ry + rx * .68;
+        const tailLift = tailHideProgress ** 3 * tailTravel;
+
+        if (opening <= .001) {
+          if (progress < shellStart) {
+            context.save();
+            context.translate(0, -tailLift);
+            drawTail(cx, cy, rx, ry);
+            context.restore();
+          }
+
+          context.fillStyle = "#afc5d2";
+          context.beginPath();
+          context.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+          context.fill();
+          drawFace(cx, cy, rx);
+
+          if (crack > 0) {
+            context.save();
+            context.globalAlpha = crack;
+            context.strokeStyle = "#657781";
+            context.lineWidth = Math.max(3, rx * .018);
+            context.lineJoin = "round";
+            traceSeam(cx, cy, rx, ry);
+            context.stroke();
+            context.restore();
+          }
+        } else {
+          const topOffsetY = -opening * ry * .82;
+          const bottomOffsetY = opening * ry * .64;
+
+          context.save();
+          context.translate(0, topOffsetY);
+          context.fillStyle = "#afc5d2";
+          traceTopShell(cx, cy, rx, ry);
+          context.fill();
+          context.strokeStyle = "#657781";
+          context.lineWidth = Math.max(3, rx * .018);
+          context.lineJoin = "round";
+          traceSeam(cx, cy, rx, ry);
+          context.stroke();
+          context.restore();
+
+          context.save();
+          context.translate(0, bottomOffsetY);
+          context.fillStyle = "#afc5d2";
+          traceBottomShell(cx, cy, rx, ry);
+          context.fill();
+          context.strokeStyle = "#657781";
+          context.lineWidth = Math.max(3, rx * .018);
+          context.lineJoin = "round";
+          traceSeam(cx, cy, rx, ry);
+          context.stroke();
+          context.restore();
+
+          if (opening < .18) drawFace(cx, cy, rx, 1 - opening / .18);
+        }
+        context.restore();
+
+        const caption = progress < .5 ? "我是什么？" : "我是鸡蛋！";
+        const captionX = Math.min(width - 155, cx + rx * .72);
+        const captionY = Math.max(70, cy - ry * .9);
+        drawCaption(caption, captionX, captionY, clamp(width / 1100, .72, 1.15));
+
+        requestAnimationFrame(drawScene);
+      }
+
+      function onResults(results) {
+        if (!results.poseLandmarks) {
+          pageTurn.classList.remove("touch-active");
+          pageBack.classList.remove("touch-active");
+          pageTouchStartedAt = null;
+          backTouchStartedAt = null;
+          return;
+        }
+
+        updatePageTouch(results.poseLandmarks);
+
+        const shoulder = results.poseLandmarks[12];
+        const wrist = results.poseLandmarks[16];
+        if ((shoulder.visibility || 0) < .45 || (wrist.visibility || 0) < .45) return;
+
+        const measuredHeight = clamp((shoulder.y - wrist.y + .04) / .44, 0, 1);
+        targetProgress = measuredHeight;
+      }
+
+      async function start() {
+        if (running) return;
+        error.textContent = "";
+        startButton.disabled = true;
+        startButton.textContent = "正在加载动作引擎…";
+        try {
+          if (!window.Pose || !window.Camera) throw new Error("动作引擎加载失败，请检查网络");
+          pose = new window.Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+          });
+          pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: .55,
+            minTrackingConfidence: .55,
+          });
+          pose.onResults(onResults);
+          camera = new window.Camera(video, {
+            onFrame: async () => pose.send({ image: video }),
+            width: 1280,
+            height: 720,
+          });
+          await camera.start();
+          running = true;
+          root.classList.add("is-playing");
+          startScreen.classList.add("hidden");
+        } catch (cause) {
+          console.error(cause);
+          error.textContent = cause instanceof Error ? cause.message : "无法开启摄像头";
+          startButton.disabled = false;
+          startButton.textContent = "重新尝试";
+        }
+      }
+
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("message", (event) => {
+        if (!sharedCameraMode || event.origin !== window.location.origin) return;
+        if (event.data?.type !== "POSE_RESULTS") return;
+        onResults({ poseLandmarks: event.data.landmarks });
+      });
+      startButton.addEventListener("click", start);
+      pageBack.addEventListener("click", showPreviousPage);
+      pageTurn.addEventListener("click", showNextPage);
+
+      async function attachSharedCamera() {
+        if (!sharedCameraMode) return;
+        const parentVideo = window.parent.document.querySelector("#input-video");
+        const stream = parentVideo?.srcObject;
+        if (!stream) {
+          window.setTimeout(attachSharedCamera, 120);
+          return;
+        }
+        if (video.srcObject !== stream) video.srcObject = stream;
+        try {
+          await video.play();
+        } catch (cause) {
+          console.warn("共享摄像头画面暂时无法播放：", cause);
+        }
+      }
+
+      if (sharedCameraMode) {
+        document.documentElement.classList.add("shared-camera");
+        document.body.classList.add("shared-camera");
+        root.classList.add("is-playing");
+        startScreen.classList.add("hidden");
+        running = true;
+        attachSharedCamera();
+      }
+
+      document.fonts.load('40px "TongZhen"').finally(() => {
+        requestAnimationFrame(drawScene);
+      });
+    </script>
+  </body>
+</html

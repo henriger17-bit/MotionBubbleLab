@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07101f" />
+    <meta
+      name="description"
+      content="宝宝站到镜头前，让身体成为控制器，在体感绘本中操作奇妙世界。"
+    />
+    <title>「宝宝动动动！」体感绘本</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='25' cy='24' r='18' fill='%234f8cff'/%3E%3Ccircle cx='42' cy='40' r='15' fill='%2372f5e5' fill-opacity='.8'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  </head>
+  <body>
+    <main id="app">
+      <div class="video-stage" id="video-stage" aria-label="全屏实时摄像头画面">
+        <video id="input-video" playsinline muted></video>
+        <canvas id="landmark-canvas" aria-hidden="true"></canvas>
+        <div class="camera-placeholder" id="camera-placeholder">
+          <span class="scan-icon"></span>
+          <p>开启摄像头，进入泡泡空间</p>
+        </div>
+        <div class="video-vignette" aria-hidden="true"></div>
+        <div class="scan-line" aria-hidden="true"></div>
+      </div>
+      <div id="scene" aria-label="叠加在摄像头画面中的 3D 彩色泡泡互动区域"></div>
+      <div class="grain" aria-hidden="true"></div>
+
+      <section class="welcome-screen" id="welcome-screen" aria-labelledby="welcome-title">
+        <div class="welcome-content">
+          <h1 id="welcome-title" aria-label="宝宝动动动！体感绘本">
+            <span class="title-warm">「宝宝</span><span class="title-pink title-dong-one">动</span><span class="title-blue title-dong-two">动</span><span class="title-green title-dong-three">动</span><span class="title-warm">！」</span><br />
+            <span class="title-book">体感绘本</span>
+          </h1>
+          <small class="lobby-distance-hint">请离屏幕远一些，让摄像头看到完整身体</small>
+          <p>宝宝站到镜头前，让身体成为控制器，操作奇妙世界。</p>
+          <button class="magic-start" id="welcome-start" type="button" aria-label="开启摄像头，进入奇妙世界">
+            <span class="magic-symbols" aria-hidden="true">
+              <i>✿</i><i>★</i><i>❧</i><i>✎</i>
+            </span>
+          </button>
+          <small id="welcome-status" role="status" aria-live="polite">点击闪亮按钮开启摄像头</small>
+        </div>
+      </section>
+
+      <section class="home-screen" id="home-screen" aria-labelledby="home-title">
+        <div class="lobby-heading">
+          <h2 id="home-title">选择一个奇妙世界</h2>
+          <p>挥挥手，开始今天的体感冒险</p>
+        </div>
+        <div class="game-grid" aria-label="游戏列表">
+          <button class="game-tile lobby-book" type="button" data-game="book">
+            <span class="game-visual book-visual" aria-hidden="true">
+              <svg class="flat-arm flat-arm-left" viewBox="0 0 120 230">
+                <path class="arm-shape" d="M28 232c4-37 5-67 9-97 3-25 7-48 10-71 1-8 4-13 10-14 6-1 10 4 10 11l-1 22 7-54c1-8 5-12 11-11 6 1 9 6 8 13l-6 52 10-41c2-7 6-10 12-8 6 2 8 7 6 14l-12 49 9-23c3-7 8-9 13-6 5 3 6 8 3 14l-20 49c-5 12-9 28-10 43l-2 58Z"/>
+                <path class="palm-line" d="M49 108c13 8 27 10 43 4M53 129c9 4 18 5 28 3"/>
+              </svg>
+              <svg class="flat-arm flat-arm-right" viewBox="0 0 120 230">
+                <path class="arm-shape" d="M28 232c4-37 5-67 9-97 3-25 7-48 10-71 1-8 4-13 10-14 6-1 10 4 10 11l-1 22 7-54c1-8 5-12 11-11 6 1 9 6 8 13l-6 52 10-41c2-7 6-10 12-8 6 2 8 7 6 14l-12 49 9-23c3-7 8-9 13-6 5 3 6 8 3 14l-20 49c-5 12-9 28-10 43l-2 58Z"/>
+                <path class="palm-line" d="M49 108c13 8 27 10 43 4M53 129c9 4 18 5 28 3"/>
+              </svg>
+              <i class="motion-spark spark-left">✦</i>
+              <i class="motion-spark spark-right">✦</i>
+            </span>
+            <span class="game-meta"><small>SHAPE · 01</small><b>向上变变变</b><em>向上举起小手，看形状变出奇妙新世界。</em></span>
+            <span class="game-action">进入绘本 <i>↗</i></span>
+          </button>
+          <button class="game-tile lobby-bubble" type="button" data-game="bubble">
+            <span class="game-visual bubble-visual" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="game-meta"><small>COLOR · 02</small><b>色彩撞撞撞</b><em>推动三原色泡泡，让它们碰撞融合新颜色。</em></span>
+            <span class="game-action">进入绘本 <i>↗</i></span>
+          </button>
+          <div class="coming-grid" aria-label="更多开发中的体感绘本">
+            <button class="coming-card" type="button" data-coming-soon><i>♧</i><b>动物跳跳跳</b><small>动物体感</small></button>
+            <button class="coming-card" type="button" data-coming-soon><i>〰</i><b>线条长长长</b><small>线条体感</small></button>
+            <button class="coming-card" type="button" data-coming-soon><i>★</i><b>星光挥挥挥</b><small>星空体感</small></button>
+            <button class="coming-card" type="button" data-coming-soon><i>◈</i><b>图形转转转</b><small>图形体感</small></button>
+          </div>
+        </div>
+        <div class="home-foot"><span>更多体感绘本持续更新</span><p>摄像头已开启 · 身体就是控制器</p></div>
+      </section>
+
+      <section class="embedded-game" id="embedded-game" hidden>
+        <button class="embedded-back" id="embedded-back" type="button"><span>←</span> 返回</button>
+        <iframe
+          id="game-frame"
+          title="向上变变变互动游戏"
+          src="about:blank"
+          allow="camera"
+          allowtransparency="true"
+          referrerpolicy="no-referrer"
+        ></iframe>
+      </section>
+
+      <section class="game-preview" id="game-preview" aria-live="polite" hidden>
+        <button class="preview-back" id="preview-back" type="button">← 返回游戏大厅</button>
+        <div class="preview-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+        <p class="eyebrow"><span id="preview-code">NEW</span> MOTION GAME</p>
+        <h2 id="preview-title">新游戏</h2>
+        <p id="preview-description"></p>
+        <span class="coming-badge">即将开放</span>
+      </section>
+
+      <header class="topbar">
+        <button class="brand" id="home-button" type="button" aria-label="返回动作游戏主页">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span>
+            <strong>Motion Arcade</strong>
+            <small>BODY PLAYGROUND</small>
+          </span>
+        </button>
+        <button class="back-button game-only" id="back-button" type="button">← 返回</button>
+        <div class="top-actions game-only">
+          <div class="live-pill" id="tracking-pill">
+            <span></span>
+            <b id="tracking-label">等待连接</b>
+          </div>
+        </div>
+      </header>
+
+      <nav class="bubble-pages game-only" aria-label="泡泡游戏关卡">
+        <button class="bubble-reset" id="reset-button" type="button">重置</button>
+        <button id="bubble-page-back" type="button" aria-label="上一关">‹</button>
+        <button id="bubble-page-next" type="button" aria-label="下一关">›</button>
+      </nav>
+
+      <div class="first-play-hint" id="first-play-hint">挥手推动泡泡，看看会变成什么颜色</div>
+
+      <section class="intro game-only" aria-labelledby="page-title">
+        <p class="eyebrow"><span>REAL-TIME</span> BODY CANVAS</p>
+        <h1 id="page-title">让颜色随<br /><em>身体流动</em></h1>
+        <p class="intro-copy">挥动手臂、转动身体或抬起双腿，推动漂浮的泡泡。<br />当色彩相遇，它们会融合成新的颜色。</p>
+        <div class="actions">
+          <button class="primary-button" id="start-button" type="button">
+            <span class="button-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 10l4.5-2.5v9L15 14M5 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>
+            </span>
+            <span><b>开启全身追踪</b><small>需要摄像头权限</small></span>
+          </button>
+          <button class="text-button" id="demo-button" type="button">先用鼠标体验 <span>↗</span></button>
+        </div>
+      </section>
+
+      <aside class="camera-card game-only" id="camera-card" aria-label="全身姿态捕捉状态">
+        <div class="camera-head">
+          <span><i></i> AR BODY SPACE</span>
+          <b id="fps-label">-- FPS</b>
+        </div>
+        <div class="tracking-body">
+          <span class="tracking-reticle" aria-hidden="true"><i></i></span>
+          <div>
+            <strong>实时全身追踪</strong>
+            <span id="pose-status">等待摄像头连接</span>
+          </div>
+        </div>
+        <div class="camera-foot">
+          <span>33 BODY LANDMARKS</span>
+          <div class="signal"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </aside>
+
+      <section class="guide-card game-only" id="guide-card" aria-label="操作提示">
+        <div class="guide-number">01</div>
+        <div>
+          <strong>挥动身体</strong>
+          <p>用手臂、躯干和双腿推动泡泡</p>
+        </div>
+        <div class="gesture-art" aria-hidden="true">
+          <span class="mini-bubble one"></span>
+          <span class="mini-bubble two"></span>
+          <svg viewBox="0 0 64 48"><circle cx="42" cy="7" r="4"/><path d="M42 12v14m0-10-12 9m12-9 12 8M42 26l-9 16m9-16 10 16"/></svg>
+        </div>
+      </section>
+
+      <footer class="footer game-only">
+        <div class="stat"><span>ACTIVE BUBBLES</span><b id="bubble-count">02</b></div>
+        <p>请尽量让全身保持在镜头内 · 四肢与躯干均可交互</p>
+      </footer>
+
+      <div class="mix-legend-wrapper game-only" id="mix-legend-wrapper">
+        <div class="mix-legend" id="mix-legend">
+          <span class="legend-equation">
+            <span class="dot" id="mix-color-a"></span><i>+</i><span class="dot" id="mix-color-b"></span><i>=</i><span class="dot result-dot" id="mix-color-result"></span>
+          </span>
+          <small id="mix-label"></small>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <!-- MediaPipe 以普通 script 方式加载，并提供 Pose / Camera / Drawing 全局变量 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

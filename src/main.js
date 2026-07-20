@@ -774,7 +774,7 @@ class PoseTracker {
     dom.startButton.querySelector("b").textContent = "正在加载姿态模型";
 
     this.pose = new window.Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+      locateFile: (file) => `${import.meta.env.BASE_URL}mediapipe/pose/${file}`,
     });
     this.pose.setOptions({
       modelComplexity: 1,
@@ -790,7 +790,13 @@ class PoseTracker {
     const portrait = window.innerHeight > window.innerWidth;
     this.camera = new window.Camera(dom.video, {
       onFrame: async () => {
-        if (this.pose) await this.pose.send({ image: dom.video });
+        if (!this.pose) return;
+        try {
+          await this.pose.send({ image: dom.video });
+        } catch (error) {
+          console.error("MediaPipe Pose 推理失败：", error);
+          this.handleModelError("姿态模型运行失败，请刷新重试");
+        }
       },
       width: portrait ? 720 : 1280,
       height: portrait ? 1280 : 720,
@@ -798,6 +804,12 @@ class PoseTracker {
 
     await this.camera.start();
     this.running = true;
+
+    this.modelLoadTimer = window.setTimeout(() => {
+      if (this.running && !this.lastResultTime) {
+        this.handleModelError("姿态模型加载失败，请检查网络后刷新重试");
+      }
+    }, 12000);
     dom.videoStage.classList.add("live");
     dom.app.classList.add("camera-live");
     dom.cameraCard.classList.add("active");
@@ -809,6 +821,10 @@ class PoseTracker {
   }
 
   async stop() {
+    if (this.modelLoadTimer) {
+      window.clearTimeout(this.modelLoadTimer);
+      this.modelLoadTimer = null;
+    }
     if (this.camera) this.camera.stop();
     if (this.pose) await this.pose.close();
     this.camera = null;
@@ -831,7 +847,23 @@ class PoseTracker {
     setTrackingState("idle", "等待连接");
   }
 
+  handleModelError(message) {
+    console.error(message);
+    if (this.modelLoadTimer) {
+      window.clearTimeout(this.modelLoadTimer);
+      this.modelLoadTimer = null;
+    }
+    setTrackingState("error", "模型加载失败");
+    dom.poseStatus.textContent = message;
+    dom.fpsLabel.textContent = "-- FPS";
+    if (this.running) this.stop();
+  }
+
   onResults(results) {
+    if (this.modelLoadTimer) {
+      window.clearTimeout(this.modelLoadTimer);
+      this.modelLoadTimer = null;
+    }
     const now = performance.now();
     if (this.lastResultTime) {
       const currentFps = 1000 / Math.max(now - this.lastResultTime, 1);

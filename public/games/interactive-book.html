@@ -279,8 +279,8 @@
       </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="/mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="/mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script>
       const root = document.querySelector("#book-game");
       const video = document.querySelector("#camera");
@@ -299,6 +299,8 @@
       let leverProgress = 0;
       let progress = 0;
       let running = false;
+      let modelLoadTimer = null;
+      let poseReceived = false;
       let currentPage = 1;
       let pageTouchStartedAt = null;
       let backTouchStartedAt = null;
@@ -1523,6 +1525,8 @@
       }
 
       function onResults(results) {
+        if (modelLoadTimer) { clearTimeout(modelLoadTimer); modelLoadTimer = null; }
+        poseReceived = true;
         if (!results.poseLandmarks) {
           pageTurn.classList.remove("touch-active");
           pageBack.classList.remove("touch-active");
@@ -1541,6 +1545,22 @@
         targetProgress = measuredHeight;
       }
 
+      function handleModelError(message) {
+        console.error(message);
+        if (modelLoadTimer) { clearTimeout(modelLoadTimer); modelLoadTimer = null; }
+        running = false;
+        poseReceived = false;
+        try { if (camera) camera.stop(); } catch (e) {}
+        try { if (pose) pose.close(); } catch (e) {}
+        camera = null;
+        pose = null;
+        root.classList.remove("is-playing");
+        startScreen.classList.remove("hidden");
+        error.textContent = message;
+        startButton.disabled = false;
+        startButton.textContent = "重新尝试";
+      }
+
       async function start() {
         if (running) return;
         error.textContent = "";
@@ -1549,7 +1569,7 @@
         try {
           if (!window.Pose || !window.Camera) throw new Error("动作引擎加载失败，请检查网络");
           pose = new window.Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+            locateFile: (file) => `/mediapipe/pose/${file}`,
           });
           pose.setOptions({
             modelComplexity: 1,
@@ -1560,7 +1580,15 @@
           });
           pose.onResults(onResults);
           camera = new window.Camera(video, {
-            onFrame: async () => pose.send({ image: video }),
+            onFrame: async () => {
+              if (!pose) return;
+              try {
+                await pose.send({ image: video });
+              } catch (cause) {
+                console.error("MediaPipe Pose 推理失败：", cause);
+                handleModelError("动作引擎运行失败，请刷新重试");
+              }
+            },
             width: 1280,
             height: 720,
           });
@@ -1568,6 +1596,10 @@
           running = true;
           root.classList.add("is-playing");
           startScreen.classList.add("hidden");
+          poseReceived = false;
+          modelLoadTimer = setTimeout(() => {
+            if (!poseReceived) handleModelError("动作引擎加载失败，请检查网络后刷新重试");
+          }, 12000);
         } catch (cause) {
           console.error(cause);
           error.textContent = cause instanceof Error ? cause.message : "无法开启摄像头";

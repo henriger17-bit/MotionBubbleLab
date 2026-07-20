@@ -101,6 +101,10 @@ const dom = {
   permissionAllow: document.querySelector("#permission-allow"),
   permissionStatus: document.querySelector("#permission-status"),
   permissionCancel: document.querySelector("#permission-cancel"),
+  noticeModal: document.querySelector("#notice-modal"),
+  noticeTitle: document.querySelector("#notice-title"),
+  noticeMessage: document.querySelector("#notice-message"),
+  noticeClose: document.querySelector("#notice-close"),
   homeButton: document.querySelector("#home-button"),
   backButton: document.querySelector("#back-button"),
   gameTiles: document.querySelectorAll("[data-game]"),
@@ -1170,6 +1174,12 @@ function closePermissionModal() {
   dom.permissionModal.hidden = true;
 }
 
+function showNotice(title, message) {
+  dom.noticeTitle.textContent = title;
+  dom.noticeMessage.textContent = message;
+  dom.noticeModal.hidden = false;
+}
+
 dom.welcomeStart.addEventListener("click", () => {
   dom.welcomeStart.disabled = true;
   openPermissionModal();
@@ -1198,11 +1208,15 @@ dom.permissionCancel.addEventListener("click", () => {
   dom.welcomeStatus.textContent = "需要开启摄像头才能开始";
 });
 
+dom.noticeClose.addEventListener("click", () => {
+  dom.noticeModal.hidden = true;
+});
+
 dom.gameTiles.forEach((tile) => {
   tile.addEventListener("click", () => selectGame(tile.dataset.game));
 });
 document.querySelectorAll("[data-coming-soon]").forEach((card) => {
-  card.addEventListener("click", () => showToast("正在开发中，敬请期待", 2200));
+  card.addEventListener("click", () => showNotice("正在开发中", "敬请期待"));
 });
 dom.homeButton.addEventListener("click", goHome);
 dom.backButton.addEventListener("click", goHome);

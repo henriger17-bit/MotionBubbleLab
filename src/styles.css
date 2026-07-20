@@ -1214,6 +1214,64 @@ h1 em {
 }
 .permission-cancel:hover { color: #5a4a3c; }
 
+.notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 16, 31, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: permission-fade .25s ease;
+}
+.notice-modal[hidden] { display: none; }
+
+.notice-card {
+  background: #fff8e9;
+  border-radius: 24px;
+  padding: 36px 44px 30px;
+  max-width: 420px;
+  width: calc(100% - 48px);
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(7, 16, 31, 0.35);
+  animation: permission-pop .3s cubic-bezier(.2, 1.2, .4, 1);
+}
+
+.notice-icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.notice-card h3 {
+  font-size: 26px;
+  margin: 0 0 10px;
+  color: #412b20;
+  font-weight: 700;
+}
+
+.notice-card p {
+  font-size: 16px;
+  color: #5a4a3c;
+  margin: 0 0 22px;
+  line-height: 1.6;
+}
+
+.notice-close {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #5b98e8, #7a6ee4);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(91, 152, 232, 0.4);
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.notice-close:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(91, 152, 232, 0.5); }
+
 #app:not(.game-active) #scene,
 #app.lobby-active #landmark-canvas,
 #app.book-active #landmark-canvas {
@@ -1594,31 +1652,22 @@ h1 em {
   background: linear-gradient(150deg, #ffd064, #f18a69);
 }
 
-.flat-arm {
+.kid-hand {
   position: absolute;
-  bottom: -8%;
-  width: 102px;
-  height: 205px;
-  overflow: visible;
-  filter: drop-shadow(0 9px 8px rgba(111, 55, 40, .16));
-  transform-origin: 50% 100%;
+  bottom: 10%;
+  font-size: 96px;
+  font-style: normal;
+  line-height: 1;
+  filter: drop-shadow(0 8px 10px rgba(111, 55, 40, 0.22));
+  animation: hand-bob 2.6s ease-in-out infinite;
 }
 
-.flat-arm-left { left: 17%; transform: rotate(-9deg); }
-.flat-arm-right { right: 17%; transform: scaleX(-1) rotate(-9deg); }
+.hand-left { left: 15%; }
+.hand-right { right: 15%; animation-delay: -1.3s; }
 
-.flat-arm .arm-shape {
-  fill: #f2b49c;
-  stroke: #9f6659;
-  stroke-width: 5;
-  stroke-linejoin: round;
-}
-
-.flat-arm .palm-line {
-  fill: none;
-  stroke: #c88775;
-  stroke-width: 3.5;
-  stroke-linecap: round;
+@keyframes hand-bob {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
 }
 
 .motion-spark {
